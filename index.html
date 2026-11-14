@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tier List</title>
+<style>
+  body { background:#111; font-family:Arial,sans-serif; margin:20px; }
+  #wrap { max-width:800px; margin:0 auto; }
+  .tier { display:flex; border:1px solid #000; background:#1a1a17; min-height:62px; }
+  .label { width:80px; flex-shrink:0; display:flex; align-items:center;
+           justify-content:center; color:#444; font-size:16px;
+           border-right:1px solid #000; }
+  .tier-items { flex:1; display:flex; flex-wrap:wrap; align-content:flex-start; padding:3px; }
+  .item { width:56px; height:56px; margin:3px; flex-shrink:0; cursor:grab; background:#444; }
+  .item img { width:100%; height:100%; object-fit:cover; display:block; pointer-events:none; }
+  #dock { margin-top:24px; border:1px solid #000; background:#1a1a17; }
+  #dock-items { display:flex; flex-wrap:wrap; align-content:flex-start;
+                overflow:hidden; padding:3px; }
+  #more { padding:6px 14px 10px; font-size:14px; color:#aaa; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="tiers"></div>
+  <div id="dock"><div id="dock-items"></div><div id="more"></div></div>
+</div>
+
+<script>
+
+
+
+
+
+
+const SUB_COUNT = 1926;
+const SPECIAL_RATIO = 50;
+const DOCK_ROWS = 4;
+const NORMAL = { img: "images/normal.png", hint: "A good 'ol Thanalite" };
+const SPECIALS = [
+  { img: "images/special1.png", hint: "hint for special 1" },
+  { img: "images/special2.png", hint: "hint for special 2" },
+  { img: "images/special3.png", hint: "hint for special 3" },
+  { img: "images/special4.png", hint: "hint for special 4" },
+  { img: "images/special5.png", hint: "hint for special 5" },
+];
+const TIERS = [["S","#ff7f7f"],["A","#ffbf7f"],["B","#ffdf7f"],
+               ["C","#ffff7f"],["D","#bfff7f"],["F","#7fff7f"]];
+
+
+
+
+
+
+
+const TOTAL_SPECIALS = Math.floor(SUB_COUNT / SPECIAL_RATIO);
+let created = 0, createdSpecials = 0, dragged = null;
+const tiersEl = document.getElementById("tiers");
+const dock = document.getElementById("dock");
+const dockItems = document.getElementById("dock-items");
+const moreEl = document.getElementById("more");
+
+function spawn() {
+  const unspawned = SUB_COUNT - created;
+  const isSpecial = Math.random() < (TOTAL_SPECIALS - createdSpecials) / unspawned;
+  const def = isSpecial ? SPECIALS[Math.floor(Math.random() * SPECIALS.length)] : NORMAL;
+  const el = document.createElement("div");
+  el.className = "item";
+  el.draggable = true;
+  el.dataset.special = isSpecial ? "1" : "";
+  if (def.hint) el.title = def.hint;
+  const img = document.createElement("img");
+  img.src = def.img;
+  img.draggable = false;
+  el.appendChild(img);
+  el.addEventListener("dragstart", e => {
+    dragged = el;
+    e.dataTransfer.setData("text/plain", "item");
+  });
+  el.addEventListener("dragend", () => { dragged = null; });
+  created++;
+  if (isSpecial) createdSpecials++;
+  dockItems.appendChild(el);
+}
+
+function refill() {
+  dockItems.style.height = (DOCK_ROWS * 62) + "px";
+  const perRow = Math.max(1, Math.floor((dockItems.clientWidth - 6) / 62));
+  const capacity = perRow * DOCK_ROWS;
+  while (dockItems.children.length > capacity) {
+    const last = dockItems.lastElementChild;
+    created--;
+    if (last.dataset.special) createdSpecials--;
+    last.remove();
+  }
+  while (dockItems.children.length < capacity && created < SUB_COUNT) spawn();
+  const n = SUB_COUNT - created;
+  moreEl.textContent = n === 0 ? "" : n.toLocaleString() + " more waiting...";
+}
+window.addEventListener("resize", refill);
+
+function insertAt(container, x, y) {
+  const kids = [...container.children].filter(k => k !== dragged);
+  const before = kids.find(k => {
+    const r = k.getBoundingClientRect();
+    return y < r.bottom && x < r.left + r.width / 2;
+  });
+  container.insertBefore(dragged, before || null);
+}
+
+TIERS.forEach(([name, color]) => {
+  const row = document.createElement("div");
+  row.className = "tier";
+  const label = document.createElement("div");
+  label.className = "label";
+  label.style.background = color;
+  label.textContent = name;
+  const zone = document.createElement("div");
+  zone.className = "tier-items";
+  row.append(label, zone);
+  row.addEventListener("dragover", e => e.preventDefault());
+  row.addEventListener("drop", e => {
+    e.preventDefault();
+    if (!dragged) return;
+    insertAt(zone, e.clientX, e.clientY);
+    refill();
+  });
+  tiersEl.appendChild(row);
+});
+
+dock.addEventListener("dragover", e => e.preventDefault());
+dock.addEventListener("drop", e => {
+  e.preventDefault();
+  if (!dragged) return;
+  if (dragged.parentElement !== dockItems) {
+    created--;
+    if (dragged.dataset.special) createdSpecials--;
+    dragged.remove();
+  }
+  refill();
+});
+
+refill();
+</script>
+</body>
+</html>
