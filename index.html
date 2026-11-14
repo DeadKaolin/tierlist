@@ -30,18 +30,15 @@
 
 
 
-
-
 const SUB_COUNT = 1926;
-const SPECIAL_RATIO = 50;
+const SPECIAL_RATIO = 30;
 const DOCK_ROWS = 4;
-const NORMAL = { img: "images/normal.png", hint: "A good 'ol Thanalite" };
+const NORMAL = { img: "images/normal.png", hint: "A good ol' Thanalite" };
 const SPECIALS = [
-  { img: "images/special1.png", hint: "No eye?? Oh it's just facing away" },
-  { img: "images/special2.png", hint: "What a fancy fella" },
-  { img: "images/special3.png", hint: "hint for special 3" },
-  { img: "images/special4.png", hint: "hint for special 4" },
-  { img: "images/special5.png", hint: "hint for special 5" },
+  { img: "images/special1.png", hint: "No eye?? Oh, it's just facing away", weight: 1 },
+  { img: "images/special2.png", hint: "What a fancy fella", weight: 1 },
+  { img: "images/special3.png", hint: "A good ol' Thanalite", weight: 10 },
+  { img: "images/special4.png", hint: "A good ol' Thanalite", weight: 10 },
 ];
 const TIERS = [["S","#ff7f7f"],["A","#ffbf7f"],["B","#ffdf7f"],
                ["C","#ffff7f"],["D","#bfff7f"],["F","#7fff7f"]];
@@ -59,10 +56,21 @@ const dock = document.getElementById("dock");
 const dockItems = document.getElementById("dock-items");
 const moreEl = document.getElementById("more");
 
+
+
+function pickSpecial() {
+  const total = SPECIALS.reduce((s, x) => s + (x.weight ?? 1), 0);
+  let r = Math.random() * total;
+  for (const sp of SPECIALS) {
+    r -= sp.weight ?? 1;
+    if (r < 0) return sp;
+  }
+  return SPECIALS[SPECIALS.length - 1];
+}  
 function spawn() {
   const unspawned = SUB_COUNT - created;
   const isSpecial = Math.random() < (TOTAL_SPECIALS - createdSpecials) / unspawned;
-  const def = isSpecial ? SPECIALS[Math.floor(Math.random() * SPECIALS.length)] : NORMAL;
+  const def = isSpecial ? pickSpecial() : NORMAL;
   const el = document.createElement("div");
   el.className = "item";
   el.draggable = true;
