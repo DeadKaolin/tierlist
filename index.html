@@ -94,9 +94,9 @@ function spawn() {
 }
 
 function refill() {
-  dockItems.style.height = ((DOCK_ROWS +0.5) * 62) + "px";
+  dockItems.style.height = ((DOCK_ROWS +1.5) * 62) + "px";
   const perRow = Math.max(1, Math.floor((dockItems.clientWidth - 6) / 62));
-  const capacity = perRow * (DOCK_ROWS * 1);
+  const capacity = perRow * (DOCK_ROWS * 2);
   while (dockItems.children.length > capacity) {
     const last = dockItems.lastElementChild;
     created--;
